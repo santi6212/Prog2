@@ -54,7 +54,7 @@ struct Paciente {
     bool activo;
 };
 
-/*struct HistorialMedico {
+struct HistorialMedico {
     int idConsulta;
     char fecha[11];
     char hora[6];
@@ -65,7 +65,7 @@ struct Paciente {
     float costo;
 };
 
-struct Doctor {
+/*struct Doctor {
     int id;
     char nombre[50];
     char apellido[50];
@@ -138,4 +138,31 @@ void deleteHospital(Hospital* hospital) {
         delete[] hospital->citas;
         delete hospital;
     }
+}
+
+//1.2 paciente
+
+void startPaciente(Paciente* paciente){
+	
+	paciente->id = 0;
+	strcpy(paciente->nombre, "");
+	strcpy(paciente->apellido, "");
+	strcpy(paciente->cedula, "");
+	paciente->edad = 0;
+	paciente->sexo = '\0';
+	strcpy(paciente->tipoSangre, "");
+	strcpy(paciente->telefono, "");
+	strcpy(paciente->direccion, "");
+	strcpy(paciente->email, "");
+	
+	paciente->cantidadConsultas=0;
+	paciente->capacidadHistorial=0;
+
+	paciente->capacidadCitas=20;
+	paciente->cantidadCitas=0;
+
+	strcpy(paciente->alergias, "");
+	strcpy(paciente->observaciones, "");
+	
+	paciente->activo = true;
 }
