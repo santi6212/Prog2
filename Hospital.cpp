@@ -65,7 +65,7 @@ struct HistorialMedico {
     float costo;
 };
 
-/*struct Doctor {
+struct Doctor {
     int id;
     char nombre[50];
     char apellido[50];
@@ -98,7 +98,7 @@ struct Cita {
     char estado[20];
     char observaciones[200];
     bool atendida;
-};^*/
+};
 
 //1.1 hospital
 
@@ -166,3 +166,43 @@ void startPaciente(Paciente* paciente){
 	
 	paciente->activo = true;
 }
+
+//1.3 historial
+
+void startHistorial(HistorialMedico* historial){
+	historial->idConsulta = 0;
+	strcpy(historial->fecha, "");
+	strcpy(historial->hora, "");
+	strcpy(historial->diagnostico, "");
+	strcpy(historial->medicamentos,"");
+	strcpy(historial->tratamiento,"");
+	historial->idDoctor = 0;
+	historial->costo = 0.0f;
+	
+}
+
+//1.4 doctor
+void startDoctor(Doctor* doctor){
+	doctor->id=0;
+	strcpy(doctor->nombre, "");
+	strcpy(doctor->apellido, "");
+	strcpy(doctor->cedula, "");
+	strcpy(doctor->especialidad, "");
+	doctor->aniosExperiencia=0;
+	doctor->costoConsulta=0;
+	strcpy(doctor->horarioAtencion, "");
+	strcpy(doctor->telefono, "");
+	strcpy(doctor->email, "");
+	
+	doctor->pacientesAsignados=0;
+	doctor->cantidadPacientes=0;
+	doctor->capacidadPacientes=0;
+	
+	doctor->citasAgendadas=0;
+	doctor->cantidadCitas=0;
+	doctor->capacidadCitas=0;
+	doctor->disponible = true;
+}
+
+//1.5 citas
+
