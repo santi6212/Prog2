@@ -133,10 +133,17 @@ Hospital* startHospital (){
 //delete delete
 void deleteHospital(Hospital* hospital) {
     if (hospital) {
+    	for (int i = 0; i < hospital->cantidadPacientes; ++i) {
+            deletePaciente(&hospital->pacientes[i]); 
+        }
+    	for (int i = 0; i < hospital->cantidadDoctores; ++i) {
+             deleteDoctor(&hospital->doctores[i]); 
+        }
         delete[] hospital->pacientes;
         delete[] hospital->doctores;
         delete[] hospital->citas;
         delete hospital;
+        
     }
 }
 
@@ -205,4 +212,73 @@ void startDoctor(Doctor* doctor){
 }
 
 //1.5 citas
+void startCita(Cita* cita){
+	cita->id=0;
+	cita->idPaciente=0;
+	cita->idDoctor=0;
+	strcpy(cita->fecha, "");
+	strcpy(cita->hora, "");
+	strcpy(cita->motivo, "");
+	strcpy(cita->estado, "agendada");
+	strcpy(cita->observaciones, "");
+	cita->atendida = false;
+}
+
+//2.1 a)crear paciente
+
+Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, int edad, char sexo); {
+                        
+if (buscarPacientePorCedula(hospital, cedula)!=nullptr){
+	cerr<<"Ya existe ese paciente"<<endl;
+}
+if (hospital->cantidadPacientes>=hospital->cantidadPacientes){
+	
+	int nuevaCapacidad = hospital->capacidadPacientes*2;
+	Paciente* nuevoArr = new Paciente[nuevaCapacidad];
+	for (int i = 0; i < hospital->cantidadPacientes; ++i) {
+        nuevoArr[i] = hospital->pacientes[i];
+        delete[] hospital->pacientes;
+        hospital->pacientes = nuevoArr;
+        hospital->capacidadPacientes = nuevaCapacidad;
+    }
+}
+	int indice = hospital->cantidadPacientes;
+    Paciente* nuevoPaciente = &hospital->pacientes[indice];
+    
+    startPaciente(nuevoPaciente);
+    
+    nuevoPaciente->id = hospital->siguienteIdPaciente;
+    strcpy(nuevoPaciente->nombre, nombre);
+    strcpy(nuevoPaciente->apellido, apellido);
+    strcpy(nuevoPaciente->cedula, cedula);
+    nuevoPaciente->edad = edad;
+    nuevoPaciente->sexo = sexo;
+    
+    hospital->cantidadPacientes++;
+    hospital->siguienteIdPaciente++;
+    
+    cout<<"Nuevo paciente registrado: "<<nuevoPaciente->id<<endl;
+    return nuevoPaciente;
+}
+
+//b) buscar por cedula
+
+
+Paciente* buscarPacientePorCedula(Hospital* hospital, const char* cedula){
+    for (int i = 0; i < hospital -> cantidadPacientes; i++) {
+        const char * cedulaPaciente = hospital -> pacientes[i].cedula;
+
+        if (strcmp(cedulaPaciente, cedula) == 0) {
+            return & hospital -> pacientes[i];
+        }
+    }
+    return nullptr;
+}
+
+//c) buscar por id
+
+Paciente* buscarPacientePorId(Hospital* hospital, int id);
+	
+	
+	
 
