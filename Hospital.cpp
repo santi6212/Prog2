@@ -507,3 +507,44 @@ void listarPacientes(Hospital* hospital){
 	
 	
 //2.2Funciones de historial médico	
+
+void agregarConsultaAlHistorial(Paciente* paciente, HistorialMedico consulta) {
+    if (paciente->cantidadConsultas >= paciente->capacidadHistorial) {
+        cout << "Historial de paciente ID " << paciente->id<< " esta lleno. Redimensionando..." <<endl;
+                  
+  
+        int nuevaCapacidad = paciente->capacidadHistorial * 2;
+        
+        HistorialMedico* nuevoHistorial = new HistorialMedico[nuevaCapacidad];
+        
+        for (int i = 0; i < paciente->cantidadConsultas; ++i) {
+            nuevoHistorial[i] = paciente->historial[i];
+        }
+        
+
+        delete[] paciente->historial;
+        
+
+        paciente->historial = nuevoHistorial;
+        paciente->capacidadHistorial = nuevaCapacidad;
+    }
+    
+    int indice = paciente->cantidadConsultas;
+    
+
+    paciente->historial[indice] = consulta; 
+    
+
+    paciente->cantidadConsultas++;
+
+    
+    cout << "Consulta agregada. Total: " << paciente->cantidadConsultas <<endl;
+}
+
+HistorialMedico* obtenerHistorialCompleto(Paciente* paciente, int* cantidad) {
+    *cantidad = paciente->cantidadConsultas;
+    
+    return paciente->historial;
+}
+
+
