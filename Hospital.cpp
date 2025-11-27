@@ -5,33 +5,46 @@
 #include <cctype> 
 #include <cstdio>
 #include <cstdlib>
-
+#include <vector>
+#include <fstream>
 using namespace std;
+inline void setText(char* dest, const char* src, size_t maxLen) {
+    if (!src) { dest[0] = '\0'; return; }
+    strncpy(dest, src, maxLen - 1);
+    dest[maxLen - 1] = '\0';
+}
 
-struct Hospital {
-    char nombre[100];
-    char direccion[150];
-    char telefono[15];
-    
-    Paciente* pacientes;
-    int cantidadPacientes;
-    int capacidadPacientes;
-    
-    Doctor* doctores;
-    int cantidadDoctores;
-    int capacidadDoctores;
-    
-    Cita* citas;
-    int cantidadCitas;
-    int capacidadCitas;
-    
-    int siguienteIdPaciente;
-    int siguienteIdDoctor;
-    int siguienteIdCita;
-    int siguienteIdConsulta;
+class HistorialMedico {
+public:
+    int idConsulta;
+    char fecha[11];
+    char hora[6];
+    char diagnostico[200];
+    char tratamiento[200];
+    char medicamentos[150];
+    int idDoctor;
+    float costo;
+
+    HistorialMedico() : idConsulta(0), idDoctor(0), costo(0.0f) {
+        strcpy(fecha, "");
+        strcpy(hora, "");
+        strcpy(diagnostico, "");
+        strcpy(tratamiento, "");
+        strcpy(medicamentos, "");
+    }
+
+    void guardarBinario(ofstream& out) const {
+        out.write(reinterpret_cast<const char*>(this), sizeof(HistorialMedico));
+    }
+
+    void cargarBinario(ifstream& in) {
+        in.read(reinterpret_cast<char*>(this), sizeof(HistorialMedico));
+    }
 };
+//1.2 paciente
 
-struct Paciente {
+class Paciente {
+public:
     int id;
     char nombre[50];
     char apellido[50];
@@ -42,33 +55,35 @@ struct Paciente {
     char telefono[15];
     char direccion[100];
     char email[50];
-    
-    HistorialMedico* historial;
-    int cantidadConsultas;
-    int capacidadHistorial;
-    
-    int* citasAgendadas;
-    int cantidadCitas;
-    int capacidadCitas;
-    
-    char alergias[500];
-    char observaciones[500];
-    
+    char alergias[200];
+    char observaciones[200];
     bool activo;
+
+    Paciente() : id(0), edad(0), sexo(' '), activo(true) {
+        strcpy(nombre, "");
+        strcpy(apellido, "");
+        strcpy(cedula, "");
+        strcpy(tipoSangre, "");
+        strcpy(telefono, "");
+        strcpy(direccion, "");
+        strcpy(email, "");
+        strcpy(alergias, "");
+        strcpy(observaciones, "");
+    }
+
+    void guardarBinario(ofstream& out) const {
+        out.write(reinterpret_cast<const char*>(this), sizeof(Paciente));
+    }
+
+    void cargarBinario(ifstream& in) {
+        in.read(reinterpret_cast<char*>(this), sizeof(Paciente));
+    }
 };
 
-struct HistorialMedico {
-    int idConsulta;
-    char fecha[11];
-    char hora[6];
-    char diagnostico[200];
-    char tratamiento[200];
-    char medicamentos[150];
-    int idDoctor;
-    float costo;
-};
 
-struct Doctor {
+//1.4 doctor
+class Doctor {
+public:
     int id;
     char nombre[50];
     char apellido[50];
@@ -76,22 +91,26 @@ struct Doctor {
     char especialidad[50];
     int aniosExperiencia;
     float costoConsulta;
-    char horarioAtencion[50];
-    char telefono[15];
-    char email[50];
-    
-    int* pacientesAsignados;
-    int cantidadPacientes;
-    int capacidadPacientes;
-    
-    int* citasAgendadas;
-    int cantidadCitas;
-    int capacidadCitas;
-    
     bool disponible;
-};
 
-struct Cita {
+    Doctor() : id(0), aniosExperiencia(0), costoConsulta(0.0f), disponible(true) {
+        strcpy(nombre, "");
+        strcpy(apellido, "");
+        strcpy(cedula, "");
+        strcpy(especialidad, "");
+    }
+
+    void guardarBinario(ofstream& out) const {
+        out.write(reinterpret_cast<const char*>(this), sizeof(Doctor));
+    }
+
+    void cargarBinario(ifstream& in) {
+        in.read(reinterpret_cast<char*>(this), sizeof(Doctor));
+    }
+};
+//1.5 citas
+class Cita {
+public:
     int id;
     int idPaciente;
     int idDoctor;
@@ -101,435 +120,275 @@ struct Cita {
     char estado[20];
     char observaciones[200];
     bool atendida;
+
+    Cita() : id(0), idPaciente(0), idDoctor(0), atendida(false) {
+        strcpy(fecha, "");
+        strcpy(hora, "");
+        strcpy(motivo, "");
+        strcpy(estado, "agendada");
+        strcpy(observaciones, "");
+    }
+
+    void guardarBinario(ofstream& out) const {
+        out.write(reinterpret_cast<const char*>(this), sizeof(Cita));
+    }
+
+    void cargarBinario(ifstream& in) {
+        in.read(reinterpret_cast<char*>(this), sizeof(Cita));
+    }
 };
+//hospital
+class Hospital {
+private:
+    char nombre[100];
+    char direccion[150];
+    char telefono[15];
 
-//1.1 hospital
+    vector<Paciente> pacientes;
+    vector<Doctor> doctores;
+    vector<Cita> citas;
 
+    int siguienteIdPaciente;
+    int siguienteIdDoctor;
+    int siguienteIdCita;
+    int siguienteIdConsulta;
 
-Hospital* startHospital (){
-	Hospital* hospital = new Hospital;
-	strcpy(hospital->nombre, "Hospital");
-	strcpy(hospital->direccion, "La Rotaria");
-	strcpy(hospital->telefono, "1234");
-	
-	
-	hospital->capacidadPacientes = 10;
-	hospital->pacientes = new Paciente[hospital->capacidadPacientes];
-	hospital->cantidadPacientes = 0;
-
-	hospital->capacidadDoctores = 10;
-	hospital->doctores = new Doctor[hospital->capacidadDoctores];
-	hospital->cantidadDoctores = 0;
-	
-	hospital->capacidadCitas = 20;
-    hospital->citas = new Cita[hospital->capacidadCitas]; 
-    hospital->cantidadCitas = 0;
-    
-    hospital->siguienteIdPaciente = 1;
-    hospital->siguienteIdDoctor = 1;
-    hospital->siguienteIdCita = 1;
-	hospital->siguienteIdConsulta = 1;
-	
- return hospital;
-}
-
-//delete delete
-void deleteHospital(Hospital* hospital) {
-    if (hospital) {
-    	for (int i = 0; i < hospital->cantidadPacientes; ++i) {
-    		deletePaciente(&hospital->pacientes[i]); 
-    	}
-    	for (int i = 0; i < hospital->cantidadDoctores; ++i) {
-    		deleteDoctor(&hospital->doctores[i]); 
-    	}
-        
-    	delete[] hospital->pacientes;
-    	delete[] hospital->doctores;
-    	delete[] hospital->citas;
-    	delete hospital;
+public:
+    Hospital(const char* nom="Hospital", const char* dir="La Rotaria", const char* tel="1234")
+        : siguienteIdPaciente(1), siguienteIdDoctor(1),
+          siguienteIdCita(1), siguienteIdConsulta(1) {
+        strcpy(nombre, nom);
+        strcpy(direccion, dir);
+        strcpy(telefono, tel);
     }
-}
 
-//1.2 paciente
+    void mostrarInfo() const {
+        cout << "=== " << nombre << " ===" << endl;
+        cout << "Dirección: " << direccion << endl;
+        cout << "Teléfono: " << telefono << endl;
+        cout << "Pacientes registrados: " << pacientes.size() << endl;
+        cout << "Doctores registrados: " << doctores.size() << endl;
+        cout << "Citas registradas: " << citas.size() << endl;
+    }
 
-void startPaciente(Paciente* paciente){
-	
-	paciente->id = 0;
-	strcpy(paciente->nombre, "");
-	strcpy(paciente->apellido, "");
-	strcpy(paciente->cedula, "");
-	paciente->edad = 0;
-	paciente->sexo = '\0';
-	strcpy(paciente->tipoSangre, "");
-	strcpy(paciente->telefono, "");
-	strcpy(paciente->direccion, "");
-	strcpy(paciente->email, "");
-	
-	paciente->capacidadHistorial=5;
-	paciente->historial = new HistorialMedico[paciente->capacidadHistorial];
-	paciente->cantidadConsultas=0;
+// ---------- Validaciones ----------
+    bool validarCedula(const char* ced) const {
+        if (!ced || !*ced) return false;
+        if (strlen(ced) > 19) return false;
+        return true;
+    }
+    bool validarSexo(char s) const {
+        s = toupper(static_cast<unsigned char>(s));
+        return s=='M' || s=='F';
+    }
+    bool validarEdad(int e) const { return e > 0 && e <= 150; }
 
-	paciente->capacidadCitas=5;
-	paciente->citasAgendadas = new int[paciente->capacidadCitas];
-	paciente->cantidadCitas=0;
+ Paciente& crearPaciente(const char* nom, const char* ape, const char* ced, int edad, char sexo) {
+        Paciente p;
+        p.id = siguienteIdPaciente++;
+        strncpy(p.nombre, nom, sizeof(p.nombre)-1);
+        strncpy(p.apellido, ape, sizeof(p.apellido)-1);
+        strncpy(p.cedula, ced, sizeof(p.cedula)-1);
+        p.edad = edad;
+        p.sexo = sexo;
+        pacientes.push_back(p);
+        return pacientes.back();
+    }
 
-	strcpy(paciente->alergias, "");
-	strcpy(paciente->observaciones, "");
-	
-	//a
-	
-	paciente->activo = true;
-}
-void deletePaciente(Paciente* paciente) {
-    if (paciente) {
-        // Liberar historial
-        if (paciente->historial) {
-            delete[] paciente->historial;
-            paciente->historial = nullptr;
+    // Buscar por ID ? devuelve índice
+    int buscarPacientePorId(int id) const {
+        for (size_t i = 0; i < pacientes.size(); ++i) {
+            if (pacientes[i].id == id) return static_cast<int>(i);
         }
-        // Liberar citasAgendadas
-        if (paciente->citasAgendadas) {
-            delete[] paciente->citasAgendadas;
-            paciente->citasAgendadas = nullptr;
+        return -1; // no encontrado
+    }
+
+    // Buscar por cédula ? devuelve índice
+    int buscarPacientePorCedula(const char* ced) const {
+        for (size_t i = 0; i < pacientes.size(); ++i) {
+            if (strcmp(pacientes[i].cedula, ced) == 0) return static_cast<int>(i);
         }
+        return -1;
     }
-}
-//1.3 historial
-
-void startHistorial(HistorialMedico* historial){
-	historial->idConsulta = 0;
-	strcpy(historial->fecha, "");
-	strcpy(historial->hora, "");
-	strcpy(historial->diagnostico, "");
-	strcpy(historial->medicamentos,"");
-	strcpy(historial->tratamiento,"");
-	historial->idDoctor = 0;
-	historial->costo = 0.0f;
-	
-}
-
-//1.4 doctor
-void startDoctor(Doctor* doctor){
-	doctor->id=0;
-	strcpy(doctor->nombre, "");
-	strcpy(doctor->apellido, "");
-	strcpy(doctor->cedula, "");
-	strcpy(doctor->especialidad, "");
-	doctor->aniosExperiencia=0;
-	doctor->costoConsulta=0;
-	strcpy(doctor->horarioAtencion, "");
-	strcpy(doctor->telefono, "");
-	strcpy(doctor->email, "");
-	
-	
-	doctor->capacidadPacientes=10;
-	doctor->pacientesAsignados = new int[doctor->capacidadPacientes];
-	doctor->cantidadPacientes=0;
-	
-	
-	doctor->capacidadCitas=10;
-	doctor->citasAgendadas = new int[doctor->capacidadCitas];
-	doctor->cantidadCitas=0;
-	doctor->disponible = true;
-}
-void deleteDoctor(Doctor* doctor) {
-    if (doctor) {
-        // Liberar pacientesAsignados
-        if (doctor->pacientesAsignados) {
-            delete[] doctor->pacientesAsignados;
-            doctor->pacientesAsignados = nullptr;
-        }
-        // Liberar citasAgendadas
-        if (doctor->citasAgendadas) {
-            delete[] doctor->citasAgendadas;
-            doctor->citasAgendadas = nullptr;
-        }
-    }
-}
-//1.5 citas
-void startCita(Cita* cita){
-	cita->id=0;
-	cita->idPaciente=0;
-	cita->idDoctor=0;
-	strcpy(cita->fecha, "");
-	strcpy(cita->hora, "");
-	strcpy(cita->motivo, "");
-	strcpy(cita->estado, "agendada");
-	strcpy(cita->observaciones, "");
-	cita->atendida = false;
-}
-
-//2.1 a)crear paciente
-
-Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, int edad, char sexo) {
-                        
-if (buscarPacientePorCedula(hospital, cedula)!=nullptr){
-	cerr<<"Ya existe ese paciente"<<endl;
-	return nullptr;
-}
-if (hospital->cantidadPacientes>=hospital->capacidadPacientes){
-	
-	int nuevaCapacidad = hospital->capacidadPacientes*2;
-	Paciente* nuevoArr = new Paciente[nuevaCapacidad];
-	for (int i = 0; i < hospital->cantidadPacientes; ++i) {
-        nuevoArr[i] = hospital->pacientes[i];
-        
-    }
-    	delete[] hospital->pacientes;
-        hospital->pacientes = nuevoArr;
-        hospital->capacidadPacientes = nuevaCapacidad;
-}
-	int indice = hospital->cantidadPacientes;
-    Paciente* nuevoPaciente = &hospital->pacientes[indice];
-    
-    startPaciente(nuevoPaciente);
-    
-    nuevoPaciente->id = hospital->siguienteIdPaciente;
-    strcpy(nuevoPaciente->nombre, nombre);
-    strcpy(nuevoPaciente->apellido, apellido);
-    strcpy(nuevoPaciente->cedula, cedula);
-    nuevoPaciente->edad = edad;
-    nuevoPaciente->sexo = sexo;
-    
-    hospital->cantidadPacientes++;
-    hospital->siguienteIdPaciente++;
-    
-    cout<<"Nuevo paciente registrado: "<<nuevoPaciente->id<<endl;
-    return nuevoPaciente;
-}
-
-//b) buscar por cedula
-
-
-Paciente* buscarPacientePorCedula(Hospital* hospital, const char* cedula){
-    for (int i = 0; i < hospital -> cantidadPacientes; i++) {
-        const char * cedulaPaciente = hospital -> pacientes[i].cedula;
-
-        if (strcmp(cedulaPaciente, cedula) == 0) {
-            return & hospital -> pacientes[i];
-        }
-    }
-    return nullptr;
-}
-
-//c) buscar por id
-
-Paciente* buscarPacientePorId(Hospital* hospital, int id){
-	for (int i = 0; i < hospital->cantidadPacientes; i++) {
-        if (hospital->pacientes[i].id == id) {
-            return &hospital->pacientes[i];
-        }
-    }
-    return nullptr;
-}
-	
-//d) buscar por nombre
-
-Paciente ** buscarPacientesPorNombre(Hospital * hospital, const char * nombre, int * cantidad) {
-    if (!hospital || !nombre || !cantidad) {
-        if (cantidad) * cantidad = 0;
-        return nullptr;
-    }
-
-    Paciente ** resultados = new Paciente * [hospital -> cantidadPacientes];
-    * cantidad = 0;
-
-    char * nombreLower = new char[strlen(nombre) + 1];
-    for (int i = 0; nombre[i]; i++) {
-        nombreLower[i] = tolower(nombre[i]);
-    }
-    nombreLower[strlen(nombre)] = '\0';
-
-    for (int i = 0; i < hospital -> cantidadPacientes; i++) {
-        char * nombrePacienteLower = new char[strlen(hospital -> pacientes[i].nombre) + 1];
-        for (int j = 0; hospital -> pacientes[i].nombre[j]; j++) {
-            nombrePacienteLower[j] = tolower(hospital -> pacientes[i].nombre[j]);
-        }
-        nombrePacienteLower[strlen(hospital -> pacientes[i].nombre)] = '\0';
-        if (strstr(nombrePacienteLower, nombreLower) != nullptr) {
-            resultados[ * cantidad] = & hospital -> pacientes[i];
-            ( * cantidad) ++;
-        }
-
-        delete[] nombrePacienteLower;
-    }
-
-    delete[] nombreLower;
-
-    if ( * cantidad == 0) {
-        delete[] resultados;
-        return nullptr;
-    }
-
-    return resultados;
-}
-
-//e) actualizar
-
-bool actualizarPaciente(Hospital* hospital, int id){
-	Paciente* paciente = buscarPacientePorId(hospital, id);
-      if (!paciente) {
+    // ---------- Actualizar (interactivo) ----------
+  bool actualizarPacienteInteractivo(int id) {
+    int idx = buscarPacientePorId(id);
+    if (idx == -1) {
         cout << "Error: No se encontró paciente con ID " << id << endl;
         return false;
     }
+    Paciente& paciente = pacientes[idx];
 
-    cout << "\n=== ACTUALIZAR DATOS DEL PACIENTE ===" << endl;
-    cout << "Paciente: " << paciente -> nombre << " " << paciente -> apellido << endl;
-    cout << "ID: " << paciente -> id << endl;
-    cout << "Deje en blanco para mantener el valor actual\n" << endl;
+    cout << "\n=== ACTUALIZAR DATOS DEL PACIENTE ===\n";
+    cout << "Paciente: " << paciente.nombre << " " << paciente.apellido << "\n";
+    cout << "Deje en blanco para mantener el valor actual\n\n";
 
-    char buffer[200];
+    char buffer[256];
 
-    cout << "Nombre actual: " << paciente -> nombre << endl;
-    cout << "Nuevo nombre: ";
-    cin.ignore();
+    auto leerCampo = [&](const char* etiqueta, char* campo, size_t maxLen) {
+        cout << etiqueta << " actual: " << campo << "\nNuevo: ";
+        cin.getline(buffer, sizeof(buffer));
+        if (strlen(buffer) > 0) setText(campo, buffer, maxLen);
+    };
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // limpiar
+
+    leerCampo("Nombre", paciente.nombre, sizeof(paciente.nombre));
+    leerCampo("Apellido", paciente.apellido, sizeof(paciente.apellido));
+
+    cout << "Edad actual: " << paciente.edad << "\nNueva edad: ";
     cin.getline(buffer, sizeof(buffer));
     if (strlen(buffer) > 0) {
-
-        bool soloEspacios = true;
-        for (int i = 0; buffer[i]; i++) {
-            if (!isspace(buffer[i])) {
-                soloEspacios = false;
-                break;
-            }
-        }
-        if (!soloEspacios) {
-            strcpy(paciente -> nombre, buffer);
-        }
+        int e = atoi(buffer);
+        if (validarEdad(e)) paciente.edad = e;
+        else cout << "Edad no válida. Manteniendo valor actual.\n";
     }
 
-    cout << "Apellido actual: " << paciente -> apellido << endl;
-    cout << "Nuevo apellido: ";
+    cout << "Sexo actual: " << paciente.sexo << "\nNuevo sexo (M/F): ";
     cin.getline(buffer, sizeof(buffer));
     if (strlen(buffer) > 0) {
-        bool soloEspacios = true;
-        for (int i = 0; buffer[i]; i++) {
-            if (!isspace(buffer[i])) {
-                soloEspacios = false;
-                break;
-            }
-        }
-        if (!soloEspacios) {
-            strcpy(paciente -> apellido, buffer);
-        }
+        char s = toupper(static_cast<unsigned char>(buffer[0]));
+        if (validarSexo(s)) paciente.sexo = s;
+        else cout << "Sexo no válido. Manteniendo valor actual.\n";
     }
 
-    cout << "Edad actual: " << paciente -> edad << endl;
-    cout << "Nueva edad: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        int nuevaEdad = atoi(buffer);
-        if (nuevaEdad > 0 && nuevaEdad <= 150) {
-            paciente -> edad = nuevaEdad;
-        } else {
-            cout << "Edad no válida. Manteniendo valor actual." << endl;
-        }
-    }
+    leerCampo("Teléfono", paciente.telefono, sizeof(paciente.telefono));
+    leerCampo("Dirección", paciente.direccion, sizeof(paciente.direccion));
+    leerCampo("Email", paciente.email, sizeof(paciente.email));
+    leerCampo("Tipo de sangre", paciente.tipoSangre, sizeof(paciente.tipoSangre));
+    leerCampo("Alergias", paciente.alergias, sizeof(paciente.alergias));
+    leerCampo("Observaciones", paciente.observaciones, sizeof(paciente.observaciones));
 
-    cout << "Sexo actual: " << paciente -> sexo << endl;
-    cout << "Nuevo sexo (M/F): ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        char nuevoSexo = toupper(buffer[0]);
-        if (nuevoSexo == 'M' || nuevoSexo == 'F') {
-            paciente -> sexo = nuevoSexo;
-        } else {
-            cout << "Sexo no válido. Use M o F. Manteniendo valor actual." << endl;
-        }
-    }
-
-    cout << "Teléfono actual: " << paciente -> telefono << endl;
-    cout << "Nuevo teléfono: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> telefono, buffer);
-    }
-
-    cout << "Dirección actual: " << paciente -> direccion << endl;
-    cout << "Nueva dirección: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> direccion, buffer);
-    }
-
-    cout << "Email actual: " << paciente -> email << endl;
-    cout << "Nuevo email: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> email, buffer);
-    }
-
-    cout << "Tipo de sangre actual: " << paciente -> tipoSangre << endl;
-    cout << "Nuevo tipo de sangre: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> tipoSangre, buffer);
-    }
-
-    cout << "Alergias actuales: " << paciente -> alergias << endl;
-    cout << "Nuevas alergias: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> alergias, buffer);
-    }
-
-    cout << "Observaciones actuales: " << paciente -> observaciones << endl;
-    cout << "Nuevas observaciones: ";
-    cin.getline(buffer, sizeof(buffer));
-    if (strlen(buffer) > 0) {
-        strcpy(paciente -> observaciones, buffer);
-    }
-
-    cout << "\nDatos del paciente actualizados correctamente." << endl;
-    return true;
-}
-    
-//f) eliminar
-
-bool eliminarPaciente(Hospital* hospital, int id){
-
-
-    if (eliminarIndice == -1) return false;
-
-
-    deletePaciente(&hospital->pacientes[eliminarIndice]); 
-
-    for (int i = eliminarIndice; i < hospital->cantidadPacientes - 1; ++i) {
-  
-        hospital->pacientes[i] = hospital->pacientes[i + 1];
-    }
-
-    hospital->cantidadPacientes--;
-
+    cout << "\nDatos del paciente actualizados correctamente.\n";
     return true;
 }
 
-//g)listar
-void listarPacientes(Hospital* hospital){
-	if (hospital->cantidadPacientes == 0) {
-        cout << "No hay pacientes registrados." << std::endl;
+   // Eliminar paciente
+    bool eliminarPaciente(int id) {
+        int idx = buscarPacientePorId(id);
+        if (idx == -1) return false;
+        pacientes.erase(pacientes.begin() + idx);
+        return true;
+    }
+    // ---------- Listar ----------
+    void listarPacientes() const {
+        if (pacientes.empty()) {
+            cout << "No hay pacientes registrados.\n";
+            return;
+        }
+        printf("| %-4s | %-25s | %-15s | %-5s | %-8s |\n",
+               "ID", "NOMBRE COMPLETO", "CEDULA", "EDAD", "SEXO");
+        for (const auto& p : pacientes) {
+            char nombreCompleto[101];
+            snprintf(nombreCompleto, sizeof(nombreCompleto), "%s %s", p.nombre, p.apellido);
+            printf("| %-4d | %-25s | %-15s | %-5d | %-8c |\n",
+                   p.id, nombreCompleto, p.cedula, p.edad, p.sexo);
+        }
+    }
+
+// Agregar consulta
+void agregarConsultaAlHistorial(Paciente& paciente, const HistorialMedico& consulta) {
+    paciente.historial.push_back(consulta);
+    cout << "Consulta agregada. Total: " << paciente.historial.size() << endl;
+}
+
+// Obtener historial completo
+vector<HistorialMedico>& obtenerHistorialCompleto(Paciente& paciente) {
+    return paciente.historial;
+}
+
+// Mostrar historial
+void mostrarHistorialMedico(const Paciente& paciente) {
+    if (paciente.historial.empty()) {
+        cout << "El paciente ID " << paciente.id << " no tiene consultas registradas." << endl;
         return;
     }
 
-    printf("| %-4s | %-25s | %-15s | %-5s | %-10s |\n", 
-           "ID", "NOMBRE COMPLETO", "CEDULA", "EDAD", "CONSULTAS");
+    cout << "\n--- HISTORIAL MÉDICO DEL PACIENTE ID " << paciente.id
+         << " (" << paciente.nombre << " " << paciente.apellido << ") ---" << endl;
 
+    printf("| %-4s | %-10s | %-5s | %-30s | %-15s | %-8s |\n",
+           "ID", "FECHA", "HORA", "DIAGNOSTICO", "DOCTOR ID", "COSTO");
+    cout << "-----------------------------------------------------------------------------------" << endl;
 
-    for (int i = 0; i < hospital->cantidadPacientes; ++i) {
-        const Paciente& p = hospital->pacientes[i];
-        
-        char nombreCompleto[101];
-        snprintf(nombreCompleto, 101, "%s %s", p.nombre, p.apellido);
-
-        printf("| %-4d | %-25s | %-15s | %-5d | %-10d |\n", 
-               p.id, nombreCompleto, p.cedula, p.edad, p.cantidadConsultas);
+    for (const auto& h : paciente.historial) {
+        printf("| %-4d | %-10s | %-5s | %-30s | %-15d | $%-7.2f |\n",
+               h.idConsulta, h.fecha, h.hora, h.diagnostico, h.idDoctor, h.costo);
     }
+    cout << "-----------------------------------------------------------------------------------" << endl;
 }
-	
+
+// Obtener última consulta
+HistorialMedico* obtenerUltimaConsulta(Paciente& paciente) {
+    if (paciente.historial.empty()) return nullptr;
+    return &paciente.historial.back();
+}
+    // ---------- Persistencia específica de pacientes ----------
+    void guardarPacientesBin() const {
+        ofstream out("pacientes.bin", ios::binary);
+        for (const auto& p : pacientes) p.guardarBinario(out);
+        out.close();
+    }
+    void cargarPacientesBin() {
+        pacientes.clear();
+        ifstream in("pacientes.bin", ios::binary);
+        Paciente p;
+        while (in.read(reinterpret_cast<char*>(&p), sizeof(Paciente))) {
+            pacientes.push_back(p);
+            // Recuperar contador de ID para no colisionar
+            if (p.id >= siguienteIdPaciente) siguienteIdPaciente = p.id + 1;
+        }
+        in.close();
+    }
+
+    // Guardar todo en binario
+    void guardarTodo() const {
+        ofstream outPac("pacientes.bin", ios::binary);
+        for (const auto& p : pacientes) p.guardarBinario(outPac);
+        outPac.close();
+
+        ofstream outDoc("doctores.bin", ios::binary);
+        for (const auto& d : doctores) d.guardarBinario(outDoc);
+        outDoc.close();
+
+        ofstream outCit("citas.bin", ios::binary);
+        for (const auto& c : citas) c.guardarBinario(outCit);
+        outCit.close();
+    }
+
+    // Cargar todo desde binario
+    void cargarTodo() {
+        pacientes.clear();
+        doctores.clear();
+        citas.clear();
+
+        ifstream inPac("pacientes.bin", ios::binary);
+        Paciente p;
+        while (inPac.read(reinterpret_cast<char*>(&p), sizeof(Paciente))) {
+            pacientes.push_back(p);
+        }
+        inPac.close();
+
+        ifstream inDoc("doctores.bin", ios::binary);
+        Doctor d;
+        while (inDoc.read(reinterpret_cast<char*>(&d), sizeof(Doctor))) {
+            doctores.push_back(d);
+        }
+        inDoc.close();
+
+        ifstream inCit("citas.bin", ios::binary);
+        Cita c;
+        while (inCit.read(reinterpret_cast<char*>(&c), sizeof(Cita))) {
+            citas.push_back(c);
+        }
+        inCit.close();
+    }
+};
+
 	
 //2.2Funciones de historial médico	
 
-void agregarConsultaAlHistorial(Paciente* paciente, HistorialMedico consulta) {
+/*void agregarConsultaAlHistorial(Paciente* paciente, HistorialMedico consulta) {
     if (paciente->cantidadConsultas >= paciente->capacidadHistorial) {
         cout << "Historial de paciente ID " << paciente->id<< " esta lleno. Redimensionando..." <<endl;
                   
@@ -604,7 +463,7 @@ HistorialMedico* obtenerUltimaConsulta(Paciente* paciente) {
     // La última consulta está en el índice (cantidadConsultas - 1)
     return &paciente->historial[paciente->cantidadConsultas - 1];
 }
-
+*/
 //3 doctoresss
 
 Doctor* buscarDoctorPorCedula(Hospital* hospital, const char* cedula) {
