@@ -406,14 +406,14 @@ HistorialMedico* obtenerUltimaConsulta(Paciente& paciente) {
     }
     void cargarPacientesBin() {
         pacientes.clear();
-        ifstream in("pacientes.bin", ios::binary);
+    ifstream in("pacientes.bin", ios::binary);
+    while (in.peek() != EOF) {
         Paciente p;
-        while (in.read(reinterpret_cast<char*>(&p), sizeof(Paciente))) {
-            pacientes.push_back(p);
-            // Recuperar contador de ID para no colisionar
-            if (p.id >= siguienteIdPaciente) siguienteIdPaciente = p.id + 1;
-        }
-        in.close();
+        p.cargarBinario(in);   // <-- usa el método correcto
+        pacientes.push_back(p);
+        if (p.id >= siguienteIdPaciente) siguienteIdPaciente = p.id + 1;
+    }
+    in.close();
     }
 
     // Guardar todo en binario
@@ -520,14 +520,16 @@ HistorialMedico* obtenerUltimaConsulta(Paciente& paciente) {
     }
 
     void cargarDoctoresBin() {
-        doctores.clear();
-        ifstream in("doctores.bin", ios::binary);
+       doctores.clear();
+    ifstream in("doctores.bin", ios::binary);
+    while (in.peek() != EOF) {
         Doctor d;
-        while (in.read(reinterpret_cast<char*>(&d), sizeof(Doctor))) {
-            doctores.push_back(d);
-            if (d.id >= siguienteIdDoctor) siguienteIdDoctor = d.id + 1;
-        }
-        in.close();
+        d.cargarBinario(in);   // usar método de la clase
+        if (!in) break;        // evita push_back si la lectura falló
+        doctores.push_back(d);
+        if (d.id >= siguienteIdDoctor) siguienteIdDoctor = d.id + 1;
+    }
+    in.close();
     }
     
     //citas
@@ -609,14 +611,16 @@ HistorialMedico* obtenerUltimaConsulta(Paciente& paciente) {
 
     // Cargar desde binario
     void cargarCitasBin() {
-        citas.clear();
-        ifstream in("citas.bin", ios::binary);
+       citas.clear();
+    ifstream in("citas.bin", ios::binary);
+    while (in.peek() != EOF) {
         Cita c;
-        while (in.read(reinterpret_cast<char*>(&c), sizeof(Cita))) {
-            citas.push_back(c);
-            if (c.id >= siguienteIdCita) siguienteIdCita = c.id + 1;
-        }
-        in.close();
+        c.cargarBinario(in);   // usar método de la clase
+        if (!in) break;        // evita push_back si la lectura falló
+        citas.push_back(c);
+        if (c.id >= siguienteIdCita) siguienteIdCita = c.id + 1;
+    }
+    in.close();
     }
     
     bool verificarDisponibilidad(int idDoctor, const char* fecha, const char* hora) {
@@ -694,6 +698,7 @@ void menuPrincipal(Hospital* hospital) {
     int opcion;
     do {
     	system("cls");
+        hospital->mostrarInfo();
         mostrarTitulo("SISTEMA DE GESTION HOSPITALARIA");
         cout << "1. Gestion de Pacientes\n";
         cout << "2. Gestion de Doctores\n";
@@ -708,8 +713,11 @@ void menuPrincipal(Hospital* hospital) {
             case 1: menuPacientes(hospital); break;
             case 2: menuDoctores(hospital); break;
             case 3: menuCitas(hospital); break;
-            case 4: cout << "\n? Saliendo del sistema. ¡Hasta pronto!\n"; break;
+            case 4: cout << "\n? Saliendo del sistema. ¡Hasta pronto!\n"; 
+			 system("pause");
+			break;
         }
+        
     } while (opcion != 4);
 }
 
@@ -740,6 +748,7 @@ void menuPacientes(Hospital* hospital) {
                 cout << "Sexo (M/F): "; cin >> sexo;
                 hospital->crearPaciente(nombre.c_str(), apellido.c_str(), cedula.c_str(), edad, sexo);
                 hospital->guardarPacientesBin();
+                system("pause");
                 break;
             }
             case 2: {
@@ -748,15 +757,19 @@ void menuPacientes(Hospital* hospital) {
                 int idx = hospital->buscarPacientePorCedula(cedula.c_str());
                 if (idx != -1) cout << "Paciente encontrado.\n";
                 else cout << "No existe paciente con esa cédula.\n";
+                system("pause");
                 break;
             }
-            case 3: hospital->listarPacientes(); break;
+            case 3: hospital->listarPacientes(); 
+			system("pause");
+			break;
             case 4: {
                 int id;
                 cout << "ID del paciente a eliminar: "; cin >> id;
                 if (hospital->eliminarPaciente(id)) cout << "Paciente eliminado.\n";
                 else cout << "Paciente no encontrado.\n";
                 hospital->guardarPacientesBin();
+                system("pause");
                 break;
             }
         }
@@ -791,6 +804,7 @@ void menuDoctores(Hospital* hospital) {
                 hospital->crearDoctor(nombre.c_str(), apellido.c_str(), cedula.c_str(),
                                       especialidad.c_str(), exp, costo);
                 hospital->guardarDoctoresBin();
+                system("pause");
                 break;
             }
             case 2: {
@@ -799,9 +813,12 @@ void menuDoctores(Hospital* hospital) {
                 Doctor* d = hospital->buscarDoctorPorId(id);
                 if (d) cout << "Doctor encontrado: " << d->nombre << " " << d->apellido << endl;
                 else cout << "No existe doctor con ese ID.\n";
+                system("pause");
                 break;
             }
-            case 3: hospital->listarDoctores(); break;
+            case 3: hospital->listarDoctores(); 
+            system("pause");
+			break;
         }
     } while (opcion != 0);
 }
@@ -836,6 +853,7 @@ void menuCitas(Hospital* hospital) {
                     cout << "? Cita agendada con ID " << c->id << endl;
                     hospital->guardarCitasBin();
                 }
+                system("pause");
                 break;
             }
             case 2: {
@@ -843,6 +861,7 @@ void menuCitas(Hospital* hospital) {
                 if (hospital->cancelarCita(idCita)) cout << "Cita cancelada.\n";
                 else cout << "No se encontro la cita.\n";
                 hospital->guardarCitasBin();
+                system("pause");
                 break;
             }
             case 3: {
@@ -850,15 +869,16 @@ void menuCitas(Hospital* hospital) {
                 if (hospital->atenderCita(idCita)) cout << "Cita atendida.\n";
                 else cout << "No se encontro la cita.\n";
                 hospital->guardarCitasBin();
+                system("pause");
                 break;
             }
-            case 4: hospital->listarCitas(); break;
+            case 4: hospital->listarCitas(); 
+			system("pause");
+			break;
         }
     } while (opcion != 0);
 }
 
-
-// --- Función Principal ---
 
 int main() {
     // Crear hospital
